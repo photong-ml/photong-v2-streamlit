@@ -4,16 +4,21 @@ st.set_page_config(
     page_title="Photong",
     page_icon="🖼️",
     menu_items={
-        # "Get Help": "https://www.extremelycoolapp.com/help",
-        # "Report a bug": "https://www.extremelycoolapp.com/bug",
-        # "About": "# This is a header. This is an *extremely* cool app!"
+        "Get Help": "https://github.com/leranjun/photong-web-app/blob/main/README.md",
+        "Report a bug": "https://github.com/leranjun/photong-web-app/issues/new",
+        "About": """
+        ## Photong
+        Photong is an app that uses machine learning technology to generate a 16-bar melody from a photo.
+
+        [View GitHub repository](https://github.com/leranjun/photong-web-app)
+        """
     }
 )
 
 st.title("Photong")
 
 
-with st.spinner("Loading imports..."):
+with st.spinner("Loading required imports..."):
     from copy import deepcopy
     from io import BytesIO
     from math import floor
@@ -24,8 +29,6 @@ with st.spinner("Loading imports..."):
     import tensorflow as tf
     from magenta.models import music_vae
     from scipy.io import wavfile
-
-    Path("saved").mkdir(exist_ok=True)
 
 
 @st.cache(allow_output_mutation=True, show_spinner=False)
@@ -72,81 +75,85 @@ def init_model():
     return arousal_model, embedding_model
 
 
-# @st.cache(allow_output_mutation=True, show_spinner=False, hash_funcs={str: hash})
-# @st.experimental_memo(show_spinner=False)
+@st.cache(allow_output_mutation=True, show_spinner=False)
 def init_decoder():
-    config_name = "hierdec-mel_16bar"
-    config = music_vae.configs.CONFIG_MAP[config_name]
-    checkpoint_path = f"saved/{config_name}.tar"
+    checkpoint_dir = f"saved/{decoder_config_name}"
 
     with st.spinner("Downloading model..."):
-        if not Path(checkpoint_path).exists():
-            from urllib.request import urlretrieve
-            urlretrieve(
-                f"https://storage.googleapis.com/magentadata/models/music_vae/checkpoints/{config_name}.tar",
-                checkpoint_path,
+        if not Path(checkpoint_dir).exists():
+            checkpoint_tar_path = f"saved/{decoder_config_name}.tar"
+            import gdown
+            gdown.download(
+                f"https://storage.googleapis.com/magentadata/models/music_vae/checkpoints/{decoder_config_name}.tar",
+                checkpoint_tar_path,
             )
+            gdown.extractall(checkpoint_tar_path, checkpoint_dir)
+            Path(checkpoint_tar_path).unlink()
 
     decoder_model = music_vae.TrainedModel(
-        config,
+        decoder_config,
         batch_size=8,
-        checkpoint_dir_or_path=checkpoint_path,
+        checkpoint_dir_or_path=f"{checkpoint_dir}/{decoder_config_name}.ckpt",
     )
 
-    return decoder_model, config
+    return decoder_model
+
+
+NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+OCTAVES = list(range(11))
+NOTES_IN_OCTAVE = len(NOTES)
+
+
+def number_to_note(number: int) -> tuple:
+    octave = number // NOTES_IN_OCTAVE
+    assert octave in OCTAVES, f"octave {octave} not in {OCTAVES}"
+    assert 0 <= number <= 127, f"number {number} not in [0, 127]"
+    note = NOTES[number % NOTES_IN_OCTAVE]
+
+    return note, octave
+
+
+def note_to_number(note: str, octave: int) -> int:
+    assert note in NOTES, f"note {note} not in {NOTES}"
+    assert octave in OCTAVES, f"octave {octave} not in {OCTAVES}"
+
+    note = NOTES.index(note)
+    note += (NOTES_IN_OCTAVE * octave)
+
+    assert 0 <= note <= 127, f"note {note} not in [0, 127]"
+
+    return note
+
+
+THEORY_CONFIG = {
+    "maj": {
+        "diatonic": [0, 2, 4, 5, 7, 9, 11],
+        "chords": {
+            "default": "maj",
+            "maj": [0, 5, 7],
+            "min": [2, 4, 9],
+            "dim": [11],
+        }
+    },
+    "min": {
+        "diatonic": [0, 2, 3, 5, 7, 8, 10],
+        "chords": {
+            "default": "min",
+            "maj": [3, 8, 10],
+            "min": [0, 5, 7],
+            "dim": [2],
+        },
+    }
+}
+
+CHORD_OFFSETS = {
+    "maj": [0, 4, 7, 12],
+    "min": [0, 3, 7, 12],
+    "dim": [0, 3, 6, 12],
+}
 
 
 def touch_up(aud_ns, arousal_res, tonality):
-    NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-    OCTAVES = list(range(11))
-    NOTES_IN_OCTAVE = len(NOTES)
-
-    def number_to_note(number: int) -> tuple:
-        octave = number // NOTES_IN_OCTAVE
-        assert octave in OCTAVES, f"octave {octave} not in {OCTAVES}"
-        assert 0 <= number <= 127, f"number {number} not in [0, 127]"
-        note = NOTES[number % NOTES_IN_OCTAVE]
-
-        return note, octave
-
-    def note_to_number(note: str, octave: int) -> int:
-        assert note in NOTES, f"note {note} not in {NOTES}"
-        assert octave in OCTAVES, f"octave {octave} not in {OCTAVES}"
-
-        note = NOTES.index(note)
-        note += (NOTES_IN_OCTAVE * octave)
-
-        assert 0 <= note <= 127, f"note {note} not in [0, 127]"
-
-        return note
-
-    THEORY_CONFIG = {
-        "maj": {
-            "diatonic": [0, 2, 4, 5, 7, 9, 11],
-            "chords": {
-                "default": "maj",
-                "maj": [0, 5, 7],
-                "min": [2, 4, 9],
-                "dim": [11],
-            }
-        },
-        "min": {
-            "diatonic": [0, 2, 3, 5, 7, 8, 10],
-            "chords": {
-                "default": "min",
-                "maj": [3, 8, 10],
-                "min": [0, 5, 7],
-                "dim": [2],
-            },
-        }
-    }
-
-    CHORD_OFFSETS = {
-        "maj": [0, 4, 7, 12],
-        "min": [0, 3, 7, 12],
-        "dim": [0, 3, 6, 12],
-    }
-
     config = THEORY_CONFIG[tonality]
 
     key = number_to_note(aud_ns.notes[0].pitch)[0]
@@ -217,15 +224,14 @@ def touch_up(aud_ns, arousal_res, tonality):
 
 
 def load_image(img):
-    # img = tf.io.read_file(image_path)
     img = tf.image.decode_image(img, channels=3)
     img = tf.image.resize(img, (299, 299))
     img = tf.keras.applications.inception_v3.preprocess_input(img)
     return img
 
 
-def img_to_emb(path):
-    img = load_image(path)
+def img_to_emb(img):
+    img = load_image(img)
     img = tf.expand_dims(img, axis=0)
     img_features = img_model(img)
     return img_features.numpy()
@@ -239,12 +245,15 @@ def emb_to_aud(emb):
     )[0]
 
 
-with st.spinner("Initialising..."):
+with st.spinner("Initialising... This will only happen once and may take a few seconds."):
+    Path("saved").mkdir(exist_ok=True)
     img_model = init_encoder()
     arousal_model, embedding_model = init_model()
+    decoder_config_name = "hierdec-mel_16bar"
+    decoder_config = music_vae.configs.CONFIG_MAP[decoder_config_name]
 
 file = st.file_uploader(
-    "Choose an image (.png / .jpg / .jpeg) to get started:",
+    "Choose an image to get started.",
     type=["png", "jpg", "jpeg"]
 )
 
@@ -255,13 +264,13 @@ if file is not None:
         tonality = "maj" if arousal_res >= 0.5 else "min"
         arousal_res = 160 * 1 / (1 + np.exp(-5 * (arousal_res - 0.5))) + 40
 
-    st.info(
-        f'Your {"exciting" if tonality == "maj" else "serene"} melody would have a tempo of {arousal_res:.0f} BPM.')
+    st.write(
+        f'Your {"exciting" if tonality == "maj" else "serene"} melody will have a tempo of {arousal_res:.0f} BPM.')
 
     with st.spinner("Generating a melody for your image..."):
         aud_res = embedding_model.predict(img_emb)
-        with st.spinner("Loading decoder..."):
-            decoder_model, decoder_config = init_decoder()
+        with st.spinner("Loading decoder model... This will only happen once and may take a few seconds."):
+            decoder_model = init_decoder()
         aud_ns = emb_to_aud(aud_res)
 
     with st.spinner("Adding some final touches..."):
@@ -277,6 +286,7 @@ if file is not None:
         virtualfile = BytesIO()
         wavfile.write(virtualfile, 44100, audio_data)
 
+    st.header("Result")
     st.image(file.getvalue())
     st.success("Here is your melody!")
     st.audio(virtualfile)
