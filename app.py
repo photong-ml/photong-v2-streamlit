@@ -53,12 +53,14 @@ def init_model():
             gdown.download(
                 id="1MpQwvZsGr4VIQxYHO0quMLSJWw5mQZuu",
                 output=arousal_model_path,
+                quiet=True,
             )
         if not Path(embedding_model_path).exists():
             import gdown
             gdown.download(
                 id="1Mypo6XOBS6uIjrY0xsq9m64JNr5krwK0",
                 output=embedding_model_path,
+                quiet=True,
             )
 
     arousal_model = tf.keras.models.load_model(
@@ -257,7 +259,8 @@ if file is not None:
 
     with st.spinner("Generating a melody for your image..."):
         aud_res = embedding_model.predict(img_emb)
-        decoder_model, decoder_config = init_decoder()
+        with st.spinner("Loading decoder..."):
+            decoder_model, decoder_config = init_decoder()
         aud_ns = emb_to_aud(aud_res)
 
     with st.spinner("Adding some final touches..."):
