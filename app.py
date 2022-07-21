@@ -16,6 +16,7 @@ st.set_page_config(
 )
 
 st.title("Photong")
+st.write("Unsure what to do? Check out the [tutorial](https://github.com/leranjun/photong-web-app/blob/main/tutorial/README.md).")
 
 
 with st.spinner("Loading required imports..."):
