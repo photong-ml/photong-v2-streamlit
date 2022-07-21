@@ -72,7 +72,8 @@ def init_model():
     return arousal_model, embedding_model
 
 
-@st.cache(allow_output_mutation=True, show_spinner=False)
+# @st.cache(allow_output_mutation=True, show_spinner=False, hash_funcs={str: hash})
+# @st.experimental_memo(show_spinner=False)
 def init_decoder():
     config_name = "hierdec-mel_16bar"
     config = music_vae.configs.CONFIG_MAP[config_name]
