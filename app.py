@@ -4,7 +4,7 @@ st.set_page_config(
     page_title="Photong",
     page_icon="🖼️",
     menu_items={
-        "Get Help": "https://github.com/leranjun/photong-web-app/blob/main/README.md",
+        "Get Help": "https://github.com/leranjun/photong-web-app/blob/main/tutorial/README.md",
         "Report a bug": "https://github.com/leranjun/photong-web-app/issues/new",
         "About": """
         ## Photong
