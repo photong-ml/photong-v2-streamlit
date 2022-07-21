@@ -9,6 +9,8 @@ magenta = "*"
 streamlit = "*"
 gdown = "*"
 pyfluidsynth = "*"
+cffi = "==1.15.0"
+pexpect = "*"
 
 [dev-packages]
 

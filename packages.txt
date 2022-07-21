@@ -3,3 +3,4 @@ libasound2-dev
 libjack-dev
 portaudio19-dev
 libsndfile1-dev
+fluidsynth
