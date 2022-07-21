@@ -1,3 +1,0 @@
-[submodule "pyfluidsynth"]
-	path = tools/pyfluidsynth
-	url = https://github.com/nwhitehead/pyfluidsynth.git

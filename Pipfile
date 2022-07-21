@@ -8,6 +8,7 @@ note-seq = "==0.0.3"
 magenta = "*"
 streamlit = "*"
 gdown = "*"
+pyfluidsynth = "*"
 
 [dev-packages]
 
