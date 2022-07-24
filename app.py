@@ -16,7 +16,8 @@ st.set_page_config(
 )
 
 st.title("Photong")
-st.write("Unsure what to do? Check out the [tutorial](https://github.com/leranjun/photong-web-app/blob/main/tutorial/README.md#using-photong).")
+st.write(
+    "Unsure what to do? Check out the [tutorial](https://github.com/leranjun/photong-web-app/blob/main/tutorial/README.md#using-photong).")
 
 
 with st.spinner("Loading required imports..."):
@@ -48,10 +49,18 @@ def init_encoder():
 
 @st.cache(allow_output_mutation=True, show_spinner=False)
 def init_model():
+    valence_model_path = "saved/valence_model_latest.h5"
     arousal_model_path = "saved/arousal_model_latest.h5"
     embedding_model_path = "saved/embedding_model_latest.h5"
 
     with st.spinner("Downloading models..."):
+        if not Path(valence_model_path).exists():
+            import gdown
+            gdown.download(
+                id="1N9MQpDROU3RfJ9msPdAQYBexUwEuxCRg",
+                output=valence_model_path,
+                quiet=True,
+            )
         if not Path(arousal_model_path).exists():
             import gdown
             gdown.download(
@@ -67,13 +76,14 @@ def init_model():
                 quiet=True,
             )
 
+    valence_model = tf.keras.models.load_model(
+        "saved/valence_model_latest.h5")
     arousal_model = tf.keras.models.load_model(
         "saved/arousal_model_latest.h5")
-
     embedding_model = tf.keras.models.load_model(
         "saved/embedding_model_latest.h5")
 
-    return arousal_model, embedding_model
+    return valence_model, arousal_model, embedding_model
 
 
 @st.cache(allow_output_mutation=True, show_spinner=False)
@@ -85,8 +95,9 @@ def init_decoder():
             checkpoint_tar_path = f"saved/{decoder_config_name}.tar"
             import gdown
             gdown.download(
-                f"https://storage.googleapis.com/magentadata/models/music_vae/checkpoints/{decoder_config_name}.tar",
-                checkpoint_tar_path,
+                url=f"https://storage.googleapis.com/magentadata/models/music_vae/checkpoints/{decoder_config_name}.tar",
+                output=checkpoint_tar_path,
+                quiet=True,
             )
             gdown.extractall(checkpoint_tar_path, checkpoint_dir)
             Path(checkpoint_tar_path).unlink()
@@ -249,7 +260,7 @@ def emb_to_aud(emb):
 with st.spinner("Initialising... This will only happen once and may take a few seconds."):
     Path("saved").mkdir(exist_ok=True)
     img_model = init_encoder()
-    arousal_model, embedding_model = init_model()
+    valence_model, arousal_model, embedding_model = init_model()
     decoder_config_name = "hierdec-mel_16bar"
     decoder_config = music_vae.configs.CONFIG_MAP[decoder_config_name]
 
@@ -261,15 +272,17 @@ file = st.file_uploader(
 if file is not None:
     with st.spinner("Got it! Let's see..."):
         img_emb = img_to_emb(file.getvalue())
-        arousal_res = arousal_model.predict(img_emb).reshape(-1)[0]
-        tonality = "maj" if arousal_res >= 0.5 else "min"
+        valence_res = valence_model.predict(img_emb, verbose=0).reshape(-1)[0]
+        tonality = "maj" if valence_res >= 0.5 else "min"
+        st.write(
+            f"I think it's a {'happy' if tonality == 'maj' else 'sad'} image.")
+        arousal_res = arousal_model.predict(img_emb, verbose=0).reshape(-1)[0]
+        st.write(
+            f"I think it's {'an exciting' if arousal_res > 0.5 else 'a peaceful'} image.")
         arousal_res = 160 * 1 / (1 + np.exp(-5 * (arousal_res - 0.5))) + 40
 
-    st.write(
-        f'Your {"exciting" if tonality == "maj" else "serene"} melody will have a tempo of {arousal_res:.0f} BPM.')
-
     with st.spinner("Generating a melody for your image..."):
-        aud_res = embedding_model.predict(img_emb)
+        aud_res = embedding_model.predict(img_emb, verbose=0)
         with st.spinner("Loading decoder model... This will only happen once and may take a few seconds."):
             decoder_model = init_decoder()
         aud_ns = emb_to_aud(aud_res)
