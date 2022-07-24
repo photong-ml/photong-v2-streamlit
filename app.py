@@ -4,7 +4,7 @@ st.set_page_config(
     page_title="Photong",
     page_icon="🖼️",
     menu_items={
-        "Get Help": "https://github.com/leranjun/photong-web-app/blob/main/tutorial/README.md",
+        "Get Help": "https://github.com/leranjun/photong-web-app/blob/main/tutorial/README.md#using-photong",
         "Report a bug": "https://github.com/leranjun/photong-web-app/issues/new",
         "About": """
         ## Photong
@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 st.title("Photong")
-st.write("Unsure what to do? Check out the [tutorial](https://github.com/leranjun/photong-web-app/blob/main/tutorial/README.md).")
+st.write("Unsure what to do? Check out the [tutorial](https://github.com/leranjun/photong-web-app/blob/main/tutorial/README.md#using-photong).")
 
 
 with st.spinner("Loading required imports..."):

@@ -24,4 +24,4 @@ pipenv run streamlit run app.py
 You may need Microsoft C++ Build Tools to build some packages. For more information, follow [this Stack Overflow answer](https://stackoverflow.com/a/64262038).
 
 ## Usage
-See [the step-by-step tutorial](https://github.com/leranjun/photong-web-app/blob/master/docs/README.md) for more information.
+See [the step-by-step tutorial](https://github.com/leranjun/photong-web-app/blob/main/tutorial/README.md) for more information.
