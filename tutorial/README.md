@@ -21,4 +21,4 @@ To save the generated melody, you can click on the three dots on the right of th
 
 Alternatively, you can click on the "Download MIDI" button below the music player and save the MIDI file to your computer. A MIDI file can be opened by any musical notation or production software, such as [MuseScore](https://musescore.org/) or any DAW (Digital Audio Workstation) software.
 
-If you run into a problem, please [open an issue](https://github.com/photong-ml/photong-streamlit/issues/new).
+If you run into a problem, please [open an issue](https://github.com/photong-ml/photong-v2-streamlit/issues/new).

@@ -4,20 +4,20 @@ st.set_page_config(
     page_title="Photong",
     page_icon="🖼️",
     menu_items={
-        "Get Help": "https://github.com/photong-ml/photong-streamlit/blob/main/tutorial/README.md#using-photong",
-        "Report a bug": "https://github.com/photong-ml/photong-streamlit/issues/new",
+        "Get Help": "https://github.com/photong-ml/photong-v2-streamlit/blob/main/tutorial/README.md#using-photong",
+        "Report a bug": "https://github.com/photong-ml/photong-v2-streamlit/issues/new",
         "About": """
         ## Photong
         Photong is an app that uses machine learning technology to generate a 16-bar melody from a photo.
 
-        [View GitHub repository](https://github.com/photong-ml/photong-streamlit)
+        [View GitHub repository](https://github.com/photong-ml/photong-v2-streamlit)
         """
     }
 )
 
 st.title("Photong")
 st.write(
-    "Unsure what to do? Check out the [tutorial](https://github.com/photong-ml/photong-streamlit/blob/main/tutorial/README.md#using-photong).")
+    "Unsure what to do? Check out the [tutorial](https://github.com/photong-ml/photong-v2-streamlit/blob/main/tutorial/README.md#using-photong).")
 
 
 with st.spinner("Loading required imports..."):
